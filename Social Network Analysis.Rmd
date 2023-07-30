@@ -1,0 +1,118 @@
+---
+title: "R Notebook"
+output:
+  html_document:
+    df_print: paged
+---
+
+***3.	The CommitteeEMail.csv file documents 129 email communications for a particular committee assignment over a three-month period and involving a total of 29 people.  The file provides you with information on who each email was From, whom the email was directed To, and the Date of the email.  The Members.csv file notes the Discipline and Role of each Person participating in the communications.  Disciplines are BUSiness or NON-business.  Roles include Faculty, Staff, and Administrator.  Write the R code to complete the following tasks to analyze the network underlying the email communications.***  
+
+***Submit your R code and output file (use filename: ‘LastName_FirstName_Project_Qs3_MIS668A’); written responses for this question can be submitted next to the question in this document.	Please submit either .Rmd files or R script files only.***																***(15 points)***
+
+***a.	Develop the graph data frame.***
+***b.	Display the graph, depicting members from business disciplines in Blue and non-business disciplines in Yellow.***
+
+***QUESTION-a***
+
+## Import packages going to me used in this assignment
+
+```{r}
+library (igraph)
+library (readr)
+library (haven)
+library (ggplot2)
+library(dplyr)
+```
+
+## Importing Collaboration Network DATA
+```{r}
+CM <- CommitteeEMail_ProjQs3
+Members <- Members_ProjQs3
+```
+
+## Exploring the dataset
+### CommitteeEMail
+```{r}
+head(CM)
+```
+```{r}
+glimpse(CM)
+```
+
+### Members
+```{r}
+head(Members)
+```
+
+## Feature engineering
+```{r}
+members <- Members %>% mutate_if(is.character,as.factor)
+head(Members)
+```
+```{r}
+head(CM)
+```
+
+```{r}
+head(Members)
+```
+
+## Merge the two dataset
+```{r}
+# Merge the two data frames based on the "Person" column
+committee_email <- merge(CM, Members, by.x = "To", by.y = "Person", suffixes = c("_from", "_to"))
+
+head(committee_email)
+```
+Creating an iGraph Style Edgelist
+```{r}
+committee_email_EdgeList <- committee_email
+
+committee_email_Graph = graph.data.frame(committee_email_EdgeList, directed=TRUE)
+
+```
+
+
+
+
+
+
+
+***QUESTION-b***
+
+
+## CommitteeEMail Network
+```{r}
+set.seed(1111)
+
+#Creating a layout object
+layout1 <- layout.fruchterman.reingold(committee_email_Graph)
+
+#Node Options
+#disciplines in Blue and non-business disciplines in Yellow.
+committee_email_Graph$color <- ifelse(committee_email_Graph$Discipline == "BUS", "blue", "yellow")
+
+V(committee_email_Graph)$size=degree(committee_email_Graph, mode = "in")/3
+#Edge Options: Color
+E(committee_email_Graph)$color <- "grey"
+    
+#We are letting the color and the size of the node indicate the directed nature of the graph
+plot(committee_email_Graph, edge.arrow.size=0.95,edge.arrow.mode = "-")
+```
+
+
+
+***QUESTION-c***
+```{r}
+# Calculate the ego metrics for each person in the network
+ego_metrics <- ego(committee_email_Graph, order = 1, mindist = 1)
+
+ego_metrics
+```
+
+
+
+
+
+
+
